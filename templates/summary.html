@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>Summary & Results</h1>
+  <p class="muted">{{ interview.candidate.name }} · {{ interview.candidate.role }}</p>
+</section>
+
+<section class="grid two">
+  <div class="panel">
+    <h2>Scores</h2>
+    <table class="score-table">
+      <thead>
+        <tr>
+          <th>Skill</th>
+          <th>Score</th>
+          <th>Visual</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for score in scores %}
+          <tr>
+            <td>{{ score.skill }}</td>
+            <td>{{ score.value }}/5</td>
+            <td>
+              <div class="score-bar">
+                <span style="width: {{ (score.value / 5) * 100 }}%"></span>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>Notes</h3>
+    <div class="note-list">
+      {% for note in notes %}
+        <div class="note-card">
+          <div class="note-meta">
+            <span class="pill">{{ note.skill }}</span>
+            <span class="tag">{{ note.tag }}</span>
+          </div>
+          <p>{{ note.text }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Generated Summary</h2>
+    <form action="{{ url_for('save_summary', interview_id=interview.id) }}" method="post" class="form">
+      <label>
+        Summary (editable)
+        <textarea name="summary" rows="8">{{ interview.summary or '' }}</textarea>
+      </label>
+      <label>
+        Recommendation
+        <select name="recommendation">
+          {% set current = interview.recommendation or '' %}
+          <option value="Hire" {% if current == 'Hire' %}selected{% endif %}>Hire</option>
+          <option value="Borderline" {% if current == 'Borderline' %}selected{% endif %}>Borderline</option>
+          <option value="No Hire" {% if current == 'No Hire' %}selected{% endif %}>No Hire</option>
+        </select>
+      </label>
+      <label>
+        Recommendation justification
+        <textarea name="recommendation_reason" rows="3">{{ interview.recommendation_reason or '' }}</textarea>
+      </label>
+      <div class="actions">
+        <button type="submit" class="primary">Save Summary</button>
+        <a class="secondary" href="{{ url_for('export_interview', interview_id=interview.id) }}">Export JSON</a>
+        <a class="secondary" href="{{ url_for('export_interview_pdf', interview_id=interview.id) }}">Export PDF</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

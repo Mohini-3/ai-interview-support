@@ -1,0 +1,285 @@
+:root {
+  color-scheme: light;
+  --bg: #f7f8fb;
+  --surface: #ffffff;
+  --text: #1a1d2b;
+  --muted: #667085;
+  --primary: #5b7cfa;
+  --secondary: #e7ecff;
+  --border: #e5e7eb;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.app-header nav a {
+  margin-left: 1rem;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.app-main {
+  padding: 2rem;
+}
+
+.app-footer {
+  padding: 1rem 2rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.panel {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.grid.two {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.grid.three {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.form input,
+.form textarea,
+.form select {
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+.form.compact label {
+  margin-bottom: 0.7rem;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.primary,
+.secondary {
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary {
+  background: var(--primary);
+  color: white;
+}
+
+.secondary {
+  background: var(--secondary);
+  color: var(--primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list li {
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.list.compact li {
+  padding: 0.4rem 0;
+  align-items: flex-start;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+.link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.question-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.question-list li {
+  border: 1px solid var(--border);
+  padding: 0.8rem;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.question-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.6rem;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  padding: 0.2rem 0.6rem;
+  background: var(--secondary);
+  color: var(--primary);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tag {
+  font-size: 0.75rem;
+  color: white;
+  background: #ff7a59;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+.note-list {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.note-card {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+}
+
+.note-meta {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.score-table th,
+.score-table td {
+  text-align: left;
+  padding: 0.6rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.score-bar {
+  background: #e5e7eb;
+  border-radius: 999px;
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.score-bar span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+}
+
+.accordion details {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.8rem;
+  background: #f9fafb;
+}
+
+.accordion summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}

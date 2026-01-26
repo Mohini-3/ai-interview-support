@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>Question Bank Editor</h1>
+  <p class="muted">Add or remove skill question sets used in interviews.</p>
+</section>
+
+<section class="grid two">
+  <div class="panel">
+    <h2>Add Skill Questions</h2>
+    <form action="{{ url_for('add_question_bank') }}" method="post" class="form">
+      <label>
+        Skill name
+        <input type="text" name="skill" placeholder="Data Engineering" required />
+      </label>
+      <label>
+        Questions (one per line)
+        <textarea name="questions" rows="6" required></textarea>
+      </label>
+      <button type="submit" class="primary">Save Questions</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>Current Question Bank</h2>
+    {% if question_bank %}
+      <div class="accordion">
+        {% for skill, questions in question_bank.items() %}
+          <details>
+            <summary>
+              <span>{{ skill }}</span>
+              <form action="{{ url_for('delete_question_bank_skill', skill=skill) }}" method="post">
+                <button class="danger" type="submit">Delete Skill</button>
+              </form>
+            </summary>
+            <ul class="list compact">
+              {% for question in questions %}
+                <li>{{ question }}</li>
+              {% endfor %}
+            </ul>
+          </details>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="muted">No skills yet.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

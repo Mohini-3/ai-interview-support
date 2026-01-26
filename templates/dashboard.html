@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>Interviewer Dashboard</h1>
+  <p>Create a new interview session or resume a previous one.</p>
+</section>
+
+<section class="grid two">
+  <div class="panel">
+    <h2>New Interview</h2>
+    <form action="{{ url_for('create_interview') }}" method="post" class="form">
+      <label>
+        Candidate name
+        <input type="text" name="name" required />
+      </label>
+      <label>
+        Education
+        <input type="text" name="education" placeholder="B.Tech CS, 3rd year" />
+      </label>
+      <label>
+        Role applied for
+        <input type="text" name="role" required />
+      </label>
+      <label>
+        Select skills
+        <div class="checkbox-grid">
+          {% for skill in default_skills %}
+            <label class="checkbox">
+              <input type="checkbox" name="skills" value="{{ skill }}" checked />
+              {{ skill }}
+            </label>
+          {% endfor %}
+        </div>
+      </label>
+      <label>
+        Custom skills (comma-separated)
+        <input type="text" name="custom_skills" placeholder="Security, Data Engineering" />
+      </label>
+      <label>
+        Assignment score (0-100)
+        <input type="number" name="assignment_score" min="0" max="100" />
+      </label>
+      <label>
+        Assignment remarks
+        <textarea name="assignment_remarks" rows="3"></textarea>
+      </label>
+      <label>
+        Optional transcript (paste)
+        <textarea name="transcript" rows="4" placeholder="Paste interview transcript"></textarea>
+      </label>
+      <button type="submit" class="primary">Start Interview</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>Recent Interviews</h2>
+    {% if interviews %}
+      <ul class="list">
+        {% for interview in interviews %}
+          <li>
+            <div>
+              <strong>{{ interview.candidate.name }}</strong>
+              <span class="muted">{{ interview.candidate.role }}</span>
+            </div>
+            <div class="actions">
+              <a class="link" href="{{ url_for('live_interview', interview_id=interview.id) }}">Resume</a>
+              <a class="link" href="{{ url_for('summary', interview_id=interview.id) }}">Summary</a>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No interviews yet.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

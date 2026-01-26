@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>Live Interview</h1>
+  <p class="muted">{{ interview.candidate.name }} · {{ interview.candidate.role }}</p>
+</section>
+
+<section class="grid three">
+  <div class="panel">
+    <h2>Questions</h2>
+    <ul class="question-list">
+      {% for question in questions %}
+        <li data-question-id="{{ question.id }}">
+          <div class="question-text">
+            <span class="pill">{{ question.skill }}</span>
+            <p>{{ question.text }}</p>
+          </div>
+          <div class="question-actions">
+            <label>
+              <input type="checkbox" class="asked-toggle" {% if question.asked %}checked{% endif %} /> Asked
+            </label>
+            <select class="rating-select">
+              <option value="">Rating</option>
+              {% for rating in range(1, 6) %}
+                <option value="{{ rating }}" {% if question.rating == rating %}selected{% endif %}>{{ rating }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>Notes</h2>
+    <form id="note-form" class="form compact">
+      <label>
+        Skill
+        <input type="text" name="skill" value="General" />
+      </label>
+      <label>
+        Tag
+        <select name="tag">
+          <option value="Strength">Strength</option>
+          <option value="Weakness">Weakness</option>
+          <option value="Red Flag">Red Flag</option>
+        </select>
+      </label>
+      <label>
+        Note
+        <textarea name="text" rows="3" required></textarea>
+      </label>
+      <button type="submit" class="primary">Add Note</button>
+    </form>
+
+    <div class="note-list" id="note-list">
+      {% for note in notes %}
+        <div class="note-card">
+          <div class="note-meta">
+            <span class="pill">{{ note.skill }}</span>
+            <span class="tag">{{ note.tag }}</span>
+          </div>
+          <p>{{ note.text }}</p>
+          <span class="muted">{{ note.timestamp.strftime('%H:%M') }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Skill Scores</h2>
+    <table class="score-table">
+      <thead>
+        <tr>
+          <th>Skill</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for score in scores %}
+          <tr>
+            <td>{{ score.skill }}</td>
+            <td>
+              <select class="score-select" data-skill="{{ score.skill }}">
+                {% for rating in range(1, 6) %}
+                  <option value="{{ rating }}" {% if score.value == rating %}selected{% endif %}>{{ rating }}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="actions">
+      <a class="primary" href="{{ url_for('summary', interview_id=interview.id) }}">Go to Summary</a>
+      <button id="generate-summary" class="secondary" type="button">Generate Summary</button>
+    </div>
+
+    <div id="summary-status" class="muted"></div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const interviewId = {{ interview.id }};
+
+  document.querySelectorAll('.question-list li').forEach(item => {
+    const questionId = item.dataset.questionId;
+    const askedToggle = item.querySelector('.asked-toggle');
+    const ratingSelect = item.querySelector('.rating-select');
+
+    const updateQuestion = () => {
+      fetch(`/api/interviews/${interviewId}/questions/${questionId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          asked: askedToggle.checked,
+          rating: ratingSelect.value ? Number(ratingSelect.value) : null
+        })
+      });
+    };
+
+    askedToggle.addEventListener('change', updateQuestion);
+    ratingSelect.addEventListener('change', updateQuestion);
+  });
+
+  document.getElementById('note-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.target;
+    const payload = Object.fromEntries(new FormData(form));
+
+    const response = await fetch(`/api/interviews/${interviewId}/notes`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const list = document.getElementById('note-list');
+      const card = document.createElement('div');
+      card.className = 'note-card';
+      card.innerHTML = `
+        <div class="note-meta">
+          <span class="pill">${data.note.skill}</span>
+          <span class="tag">${data.note.tag}</span>
+        </div>
+        <p>${data.note.text}</p>
+        <span class="muted">just now</span>
+      `;
+      list.prepend(card);
+      form.reset();
+      form.skill.value = 'General';
+      form.tag.value = 'Strength';
+    }
+  });
+
+  document.querySelectorAll('.score-select').forEach(select => {
+    select.addEventListener('change', () => {
+      fetch(`/api/interviews/${interviewId}/scores`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          skill: select.dataset.skill,
+          value: select.value
+        })
+      });
+    });
+  });
+
+  document.getElementById('generate-summary').addEventListener('click', async () => {
+    const status = document.getElementById('summary-status');
+    status.textContent = 'Generating summary...';
+    const response = await fetch(`/api/interviews/${interviewId}/generate_summary`, {
+      method: 'POST'
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      status.textContent = `Summary ready. Recommendation: ${data.recommendation}`;
+    } else {
+      status.textContent = 'Summary generation failed.';
+    }
+  });
+</script>
+{% endblock %}
