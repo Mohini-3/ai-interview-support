@@ -24,3 +24,5 @@
 ## General
 - In main page the custom role should only be enabled when the `other` option is selected
 - In Questions bank page the custom role should only be enables when the `other` option is selected
+## Questions bank page
+- in the current question bank should show how many questions are there present for each category

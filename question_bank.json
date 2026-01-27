@@ -2,7 +2,8 @@
   "Python": [
     "Explain list vs tuple and when to use each.",
     "What is a Python generator and why use it?",
-    "How does Python handle memory management?"
+    "How does Python handle memory management?",
+    "what is a interpretter"
   ],
   "DSA": [
     "Explain time complexity for common sorting algorithms.",

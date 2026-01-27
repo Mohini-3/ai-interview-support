@@ -11,7 +11,7 @@
       <div id="live-timer" class="timer" data-started="{{ interview.created_at.isoformat() }}Z" data-ended="{{ interview.ended_at.isoformat() + 'Z' if interview.ended_at else '' }}">
         00:00:00
       </div>
-      <form action="{{ url_for('end_interview', interview_id=interview.id) }}" method="post">
+      <form action="{{ url_for('main.end_interview', interview_id=interview.id) }}" method="post">
         <button type="submit" class="secondary" {% if interview.status == 'completed' %}disabled{% endif %}>End Interview</button>
       </form>
     </div>
@@ -129,7 +129,7 @@
     </table>
 
     <div class="actions">
-      <a class="primary" href="{{ url_for('summary', interview_id=interview.id) }}">Go to Summary</a>
+      <a class="primary" href="{{ url_for('main.summary', interview_id=interview.id) }}">Go to Summary</a>
       <button id="generate-summary" class="secondary" type="button" {% if interview.status != 'completed' %}disabled{% endif %}>Generate Summary</button>
     </div>
 

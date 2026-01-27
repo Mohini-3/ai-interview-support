@@ -9,7 +9,7 @@
   <section class="panel">
     <p class="alert">Summary is available only after the interview is completed.</p>
     <div class="actions">
-      <a class="primary" href="{{ url_for('live_interview', interview_id=interview.id) }}">Return to Interview</a>
+      <a class="primary" href="{{ url_for('main.live_interview', interview_id=interview.id) }}">Return to Interview</a>
     </div>
   </section>
 {% else %}
@@ -59,7 +59,7 @@
 
   <div class="panel">
     <h2>Generated Summary</h2>
-    <form action="{{ url_for('save_summary', interview_id=interview.id) }}" method="post" class="form">
+    <form action="{{ url_for('main.save_summary', interview_id=interview.id) }}" method="post" class="form">
       <label>
         Summary (editable)
         <textarea name="summary" rows="8">{{ interview.summary or '' }}</textarea>
@@ -79,8 +79,8 @@
       </label>
       <div class="actions">
         <button type="submit" class="primary">Save Summary</button>
-        <a class="secondary" href="{{ url_for('export_interview', interview_id=interview.id) }}">Export JSON</a>
-        <a class="secondary" href="{{ url_for('export_interview_pdf', interview_id=interview.id) }}">Export PDF</a>
+        <a class="secondary" href="{{ url_for('main.export_interview', interview_id=interview.id) }}">Export JSON</a>
+        <a class="secondary" href="{{ url_for('main.export_interview_pdf', interview_id=interview.id) }}">Export PDF</a>
       </div>
     </form>
   </div>
