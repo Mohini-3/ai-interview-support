@@ -150,7 +150,7 @@
       <h2>Interview History</h2>
       <p class="panel-subtitle">View and manage your interviews</p>
     </div>
-    <form class="filters" method="get" action="{{ url_for('main.dashboard') }}">
+    <form id="filters-form" class="filters" method="get" action="{{ url_for('main.dashboard') }}">
       <label>
         Role
         <select name="role">
@@ -177,8 +177,10 @@
           <option value="skill_desc" {% if sort_filter == 'skill_desc' %}selected{% endif %}>Skill score (High → Low)</option>
         </select>
       </label>
-      <button class="secondary" type="submit">Apply</button>
     </form>
+    <div style="text-align: center;">
+      <button class="primary filters-apply-btn" type="submit" form="filters-form">Apply</button>
+    </div>
 
     <div class="stack interview-section">
       <div class="section-header">
