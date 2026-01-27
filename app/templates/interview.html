@@ -1,26 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="panel">
+<section class="panel interview-header">
   <div class="header-row">
-    <div>
-      <h1>Live Interview</h1>
-      <p class="muted">{{ interview.candidate.name }} · {{ interview.candidate.role }}</p>
+    <div class="interview-title-section">
+      <h1>Live Interview Session</h1>
+      <div class="candidate-info-header">
+        <div class="candidate-badge">
+          <span class="candidate-initial">{{ interview.candidate.name[0] }}</span>
+        </div>
+        <div class="candidate-details">
+          <h3 class="candidate-name-header">{{ interview.candidate.name }}</h3>
+          <div class="candidate-meta-header">
+            <span class="meta-badge">{{ interview.candidate.role }}</span>
+            <span class="meta-divider">•</span>
+            <span class="meta-text">{{ interview.candidate.branch }}</span>
+            <span class="meta-divider">•</span>
+            <span class="meta-text">{{ interview.candidate.degree }}</span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="status-block">
-      <div class="badge">Status: {{ interview.status|capitalize }}</div>
+      <div class="status-indicator {% if interview.status == 'ongoing' %}status-live{% else %}status-ended{% endif %}">
+        <span class="status-dot"></span>
+        <span class="status-text">{{ 'Live' if interview.status == 'ongoing' else 'Completed' }}</span>
+      </div>
       <div id="live-timer" class="timer" data-started="{{ interview.created_at.isoformat() }}Z" data-ended="{{ interview.ended_at.isoformat() + 'Z' if interview.ended_at else '' }}">
         00:00:00
       </div>
-      <form action="{{ url_for('main.end_interview', interview_id=interview.id) }}" method="post">
-        <button type="submit" class="secondary" {% if interview.status == 'completed' %}disabled{% endif %}>End Interview</button>
+      <form action="{{ url_for('main.end_interview', interview_id=interview.id) }}" method="post" style="width: 100%;">
+        <button type="submit" class="btn-end-interview" {% if interview.status == 'completed' %}disabled{% endif %}>End Interview</button>
       </form>
     </div>
   </div>
 </section>
 
 <section class="grid three">
-  <div class="panel">
-    <h2>Questions</h2>
+  <div class="panel questions-panel">
+    <div class="panel-header-simple">
+      <h2>Interview Questions</h2>
+      <p class="panel-description">Track questions and candidate responses</p>
+    </div>
     <div class="accordion">
       {% for skill, skill_questions in grouped_questions.items() %}
         <details>
@@ -30,26 +50,38 @@
           </summary>
           <ul class="question-list">
             {% for question in skill_questions %}
-              <li data-question-id="{{ question.id }}">
+              <li data-question-id="{{ question.id }}" class="question-item {% if question.asked %}question-asked{% endif %}">
+                <div class="question-header">
+                  <span class="pill pill-skill">{{ question.skill }}</span>
+                  {% if question.asked %}
+                    <span class="question-status-badge asked">✓ Asked</span>
+                  {% endif %}
+                  {% if question.rating %}
+                    <span class="question-rating-badge">★ {{ question.rating }}/5</span>
+                  {% endif %}
+                </div>
                 <div class="question-text">
-                  <span class="pill">{{ question.skill }}</span>
                   <p>{{ question.text }}</p>
                 </div>
                 <div class="question-actions">
-                  <label>
-                    <input type="checkbox" class="asked-toggle" {% if question.asked %}checked{% endif %} {% if interview.status == 'completed' %}disabled{% endif %} /> Asked
+                  <label class="checkbox-label">
+                    <input type="checkbox" class="asked-toggle" {% if question.asked %}checked{% endif %} {% if interview.status == 'completed' %}disabled{% endif %} />
+                    <span>Mark as Asked</span>
                   </label>
-                  <select class="rating-select" {% if interview.status == 'completed' %}disabled{% endif %}>
-                    <option value="">Rating</option>
-                    {% for rating in range(1, 6) %}
-                      <option value="{{ rating }}" {% if question.rating == rating %}selected{% endif %}>{{ rating }}</option>
-                    {% endfor %}
-                  </select>
+                  <div class="rating-wrapper">
+                    <label class="rating-label">Rating:</label>
+                    <select class="rating-select" {% if interview.status == 'completed' %}disabled{% endif %}>
+                      <option value="">Select</option>
+                      {% for rating in range(1, 6) %}
+                        <option value="{{ rating }}" {% if question.rating == rating %}selected{% endif %}>{{ rating }} Star{{ 's' if rating > 1 else '' }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
                 </div>
-                <label class="question-note">
-                  Interviewer note
-                  <textarea class="question-note-input" rows="2" {% if interview.status == 'completed' %}disabled{% endif %}>{{ question.note or '' }}</textarea>
-                </label>
+                <div class="question-note-section">
+                  <label class="note-label">Interviewer Notes:</label>
+                  <textarea class="question-note-input" rows="2" placeholder="Add observations about the candidate's response..." {% if interview.status == 'completed' %}disabled{% endif %}>{{ question.note or '' }}</textarea>
+                </div>
               </li>
             {% endfor %}
           </ul>
@@ -58,82 +90,118 @@
     </div>
   </div>
 
-  <div class="panel">
-    <h2>Notes</h2>
-    <form id="note-form" class="form compact">
+  <div class="panel notes-panel">
+    <div class="panel-header-simple">
+      <h2>Interview Notes</h2>
+      <p class="panel-description">Record observations during the interview</p>
+    </div>
+    <form id="note-form" class="form compact note-form">
+      <div class="form-row">
+        <label>
+          Skill Category
+          <select name="skill" id="note-skill-select" {% if interview.status == 'completed' %}disabled{% endif %}>
+            {% for skill in note_skills %}
+              <option value="{{ skill }}">{{ skill }}</option>
+            {% endfor %}
+            <option value="other">+ Add Custom</option>
+          </select>
+        </label>
+        <label id="custom-skill-field" class="hidden">
+          Custom Skill
+          <input type="text" name="custom_skill" id="custom-skill-input" placeholder="e.g. Problem Solving" {% if interview.status == 'completed' %}disabled{% endif %} />
+        </label>
+        <label>
+          Tag Type
+          <select name="tag" {% if interview.status == 'completed' %}disabled{% endif %}>
+            <option value="Strength">✓ Strength</option>
+            <option value="Weakness">⚠ Weakness</option>
+            <option value="Red Flag">✕ Red Flag</option>
+          </select>
+        </label>
+      </div>
       <label>
-        Skill
-        <select name="skill" id="note-skill-select" {% if interview.status == 'completed' %}disabled{% endif %}>
-          {% for skill in note_skills %}
-            <option value="{{ skill }}">{{ skill }}</option>
-          {% endfor %}
-          <option value="other">Other</option>
-        </select>
+        Note Content
+        <textarea name="text" rows="3" placeholder="Describe your observation..." required {% if interview.status == 'completed' %}disabled{% endif %}></textarea>
       </label>
-      <label id="custom-skill-field" class="hidden">
-        Custom skill
-        <input type="text" name="custom_skill" id="custom-skill-input" placeholder="e.g. Problem Solving" {% if interview.status == 'completed' %}disabled{% endif %} />
-      </label>
-      <label>
-        Tag
-        <select name="tag" {% if interview.status == 'completed' %}disabled{% endif %}>
-          <option value="Strength">Strength</option>
-          <option value="Weakness">Weakness</option>
-          <option value="Red Flag">Red Flag</option>
-        </select>
-      </label>
-      <label>
-        Note
-        <textarea name="text" rows="3" required {% if interview.status == 'completed' %}disabled{% endif %}></textarea>
-      </label>
-      <button type="submit" class="primary" {% if interview.status == 'completed' %}disabled{% endif %}>Add Note</button>
+      <button type="submit" class="primary btn-add-note" {% if interview.status == 'completed' %}disabled{% endif %}>
+        <span>+ Add Note</span>
+      </button>
     </form>
 
-    <div class="note-list" id="note-list">
-      {% for note in notes %}
-        <div class="note-card">
-          <div class="note-meta">
-            <span class="pill">{{ note.skill }}</span>
-            <span class="tag">{{ note.tag }}</span>
+    <div class="notes-container">
+      <div class="notes-header">
+        <h3>All Notes ({{ notes|length }})</h3>
+      </div>
+      <div class="note-list" id="note-list">
+        {% if notes %}
+          {% for note in notes %}
+            <div class="note-card note-{{ note.tag.lower().replace(' ', '-') }}">
+              <div class="note-header-card">
+                <div class="note-meta">
+                  <span class="pill pill-skill">{{ note.skill }}</span>
+                  <span class="tag tag-{{ note.tag.lower().replace(' ', '-') }}">{{ note.tag }}</span>
+                </div>
+                <span class="note-time">{{ note.timestamp.strftime('%H:%M') }}</span>
+              </div>
+              <p class="note-content">{{ note.text }}</p>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="notes-empty">
+            <p>No notes yet</p>
+            <span>Add your first observation above</span>
           </div>
-          <p>{{ note.text }}</p>
-          <span class="muted">{{ note.timestamp.strftime('%H:%M') }}</span>
-        </div>
-      {% endfor %}
+        {% endif %}
+      </div>
     </div>
   </div>
 
-  <div class="panel">
-    <h2>Skill Scores</h2>
-    <table class="score-table">
-      <thead>
-        <tr>
-          <th>Skill</th>
-          <th>Score</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for score in scores %}
+  <div class="panel scores-panel">
+    <div class="panel-header-simple">
+      <h2>Skill Assessment</h2>
+      <p class="panel-description">Rate candidate performance by skill</p>
+    </div>
+    <div class="score-table-wrapper">
+      <table class="score-table">
+        <thead>
           <tr>
-            <td>{{ score.skill }}</td>
-            <td>
-              <select class="score-select" data-skill="{{ score.skill }}" {% if interview.status == 'completed' %}disabled{% endif %}>
-                {% for rating in range(1, 6) %}
-                  <option value="{{ rating }}" {% if score.value == rating %}selected{% endif %}>{{ rating }}</option>
-                {% endfor %}
-              </select>
-            </td>
+            <th>Skill Area</th>
+            <th>Rating</th>
+            <th>Visual</th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <div class="actions">
-      <a class="primary" href="{{ url_for('main.summary', interview_id=interview.id) }}">Go to Summary</a>
-      <button id="generate-summary" class="secondary" type="button" {% if interview.status != 'completed' %}disabled{% endif %}>Generate Summary</button>
+        </thead>
+        <tbody>
+          {% for score in scores %}
+            <tr>
+              <td class="skill-name">{{ score.skill }}</td>
+              <td class="skill-score">
+                <select class="score-select" data-skill="{{ score.skill }}" {% if interview.status == 'completed' %}disabled{% endif %}>
+                  {% for rating in range(1, 6) %}
+                    <option value="{{ rating }}" {% if score.value == rating %}selected{% endif %}>{{ rating }}/5</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td class="skill-visual">
+                <div class="score-bar-mini">
+                  <span style="width: {{ (score.value / 5) * 100 }}%"></span>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    <div id="summary-status" class="muted"></div>
+    <div class="actions-panel">
+      <a class="btn-action primary" href="{{ url_for('main.summary', interview_id=interview.id) }}">
+        <span>View Summary</span>
+      </a>
+      <button id="generate-summary" class="btn-action secondary" type="button" {% if interview.status != 'completed' %}disabled{% endif %}>
+        <span>Generate Summary</span>
+      </button>
+    </div>
+
+    <div id="summary-status" class="summary-status"></div>
   </div>
 </section>
 {% endblock %}
