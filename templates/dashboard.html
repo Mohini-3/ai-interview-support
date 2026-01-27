@@ -3,6 +3,25 @@
 <section class="panel">
   <h1>Interviewer Dashboard</h1>
   <p>Create a new interview session or resume a previous one.</p>
+  {% if error %}
+    <div class="alert">
+      {% if error == 'duplicate' %}
+        A candidate with this email already exists.
+      {% elif error == 'invalid_email' %}
+        Please enter a valid email address.
+      {% elif error == 'missing' %}
+        Please complete all required fields.
+      {% elif error == 'invalid_branch' %}
+        Please select a valid branch/department.
+      {% elif error == 'invalid_degree' %}
+        Please select a valid degree.
+      {% elif error == 'invalid_year' %}
+        Please select a valid year.
+      {% else %}
+        Unable to create interview. Please review the form.
+      {% endif %}
+    </div>
+  {% endif %}
 </section>
 
 <section class="grid two">
@@ -14,12 +33,49 @@
         <input type="text" name="name" required />
       </label>
       <label>
-        Education
-        <input type="text" name="education" placeholder="B.Tech CS, 3rd year" />
+        Email
+        <input type="email" name="email" required />
+      </label>
+      <label>
+        Branch/Department
+        <select name="branch" required>
+          <option value="">Select branch</option>
+          {% for branch in default_branches %}
+            <option value="{{ branch }}">{{ branch }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Degree
+        <select name="degree" required>
+          <option value="">Select degree</option>
+          {% for degree in default_degrees %}
+            <option value="{{ degree }}">{{ degree }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Year
+        <select name="year" required>
+          <option value="">Select year</option>
+          {% for year in default_years %}
+            <option value="{{ year }}">{{ year }}</option>
+          {% endfor %}
+        </select>
       </label>
       <label>
         Role applied for
-        <input type="text" name="role" required />
+        <select name="role" id="role-select" required>
+          <option value="">Select role</option>
+          {% for role in default_roles %}
+            <option value="{{ role }}">{{ role }}</option>
+          {% endfor %}
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label id="custom-role-field" class="hidden">
+        Custom role
+        <input type="text" name="custom_role" placeholder="Role title" />
       </label>
       <label>
         Select skills
@@ -54,24 +110,100 @@
 
   <div class="panel">
     <h2>Recent Interviews</h2>
-    {% if interviews %}
-      <ul class="list">
-        {% for interview in interviews %}
-          <li>
-            <div>
-              <strong>{{ interview.candidate.name }}</strong>
-              <span class="muted">{{ interview.candidate.role }}</span>
-            </div>
-            <div class="actions">
-              <a class="link" href="{{ url_for('live_interview', interview_id=interview.id) }}">Resume</a>
-              <a class="link" href="{{ url_for('summary', interview_id=interview.id) }}">Summary</a>
-            </div>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="muted">No interviews yet.</p>
-    {% endif %}
+    <form class="filters" method="get" action="{{ url_for('dashboard') }}">
+      <label>
+        Role
+        <select name="role">
+          <option value="">All</option>
+          {% for role in default_roles %}
+            <option value="{{ role }}" {% if role_filter == role %}selected{% endif %}>{{ role }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Recommendation
+        <select name="recommendation">
+          <option value="">All</option>
+          <option value="Hire" {% if recommendation_filter == 'Hire' %}selected{% endif %}>Hire</option>
+          <option value="Borderline" {% if recommendation_filter == 'Borderline' %}selected{% endif %}>Borderline</option>
+          <option value="No Hire" {% if recommendation_filter == 'No Hire' %}selected{% endif %}>No Hire</option>
+          <option value="Unrated" {% if recommendation_filter == 'Unrated' %}selected{% endif %}>Unrated</option>
+        </select>
+      </label>
+      <label>
+        Sort
+        <select name="sort">
+          <option value="">Default</option>
+          <option value="skill_desc" {% if sort_filter == 'skill_desc' %}selected{% endif %}>Skill score (High → Low)</option>
+        </select>
+      </label>
+      <button class="secondary" type="submit">Apply</button>
+    </form>
+
+    <div class="stack">
+      <h3>Ongoing Interviews</h3>
+      {% if ongoing_interviews %}
+        <ul class="list">
+          {% for interview in ongoing_interviews %}
+            <li>
+              <div>
+                <strong>{{ interview.candidate.name }}</strong>
+                <span class="muted">{{ interview.candidate.role }}</span>
+                <span class="badge">Score: {{ '%.1f'|format(skill_scores.get(interview.id, 0)) }}</span>
+              </div>
+              <div class="actions">
+                <a class="link" href="{{ url_for('live_interview', interview_id=interview.id) }}">Resume</a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">No ongoing interviews.</p>
+      {% endif %}
+    </div>
+
+    <div class="stack">
+      <h3>Completed Interviews</h3>
+      {% if completed_interviews %}
+        <ul class="list">
+          {% for interview in completed_interviews %}
+            <li>
+              <div>
+                <strong>{{ interview.candidate.name }}</strong>
+                <span class="muted">{{ interview.candidate.role }}</span>
+                <span class="badge">Score: {{ '%.1f'|format(skill_scores.get(interview.id, 0)) }}</span>
+              </div>
+              <div class="actions">
+                <span class="muted">Completed</span>
+                <a class="link" href="{{ url_for('summary', interview_id=interview.id) }}">Summary</a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">No completed interviews.</p>
+      {% endif %}
+    </div>
   </div>
 </section>
+
+{% block scripts %}
+<script>
+  const roleSelect = document.getElementById('role-select');
+  const customRoleField = document.getElementById('custom-role-field');
+
+  const toggleCustomRole = () => {
+    if (roleSelect.value === 'other') {
+      customRoleField.classList.remove('hidden');
+      customRoleField.querySelector('input').setAttribute('required', 'required');
+    } else {
+      customRoleField.classList.add('hidden');
+      customRoleField.querySelector('input').removeAttribute('required');
+    }
+  };
+
+  roleSelect.addEventListener('change', toggleCustomRole);
+  toggleCustomRole();
+</script>
+{% endblock %}
 {% endblock %}

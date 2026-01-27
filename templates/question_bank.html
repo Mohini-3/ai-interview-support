@@ -10,8 +10,17 @@
     <h2>Add Skill Questions</h2>
     <form action="{{ url_for('add_question_bank') }}" method="post" class="form">
       <label>
-        Skill name
-        <input type="text" name="skill" placeholder="Data Engineering" required />
+        Select existing skill
+        <select name="skill_existing">
+          <option value="">-- Select --</option>
+          {% for skill in question_bank.keys() %}
+            <option value="{{ skill }}">{{ skill }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Or add new skill
+        <input type="text" name="skill_new" placeholder="Data Engineering" />
       </label>
       <label>
         Questions (one per line)

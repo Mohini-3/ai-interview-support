@@ -5,6 +5,14 @@
   <p class="muted">{{ interview.candidate.name }} · {{ interview.candidate.role }}</p>
 </section>
 
+{% if blocked %}
+  <section class="panel">
+    <p class="alert">Summary is available only after the interview is completed.</p>
+    <div class="actions">
+      <a class="primary" href="{{ url_for('live_interview', interview_id=interview.id) }}">Return to Interview</a>
+    </div>
+  </section>
+{% else %}
 <section class="grid two">
   <div class="panel">
     <h2>Scores</h2>
@@ -31,17 +39,21 @@
       </tbody>
     </table>
 
-    <h3>Notes</h3>
+    <h3>Asked Questions</h3>
     <div class="note-list">
-      {% for note in notes %}
+      {% for question in asked_questions %}
         <div class="note-card">
           <div class="note-meta">
-            <span class="pill">{{ note.skill }}</span>
-            <span class="tag">{{ note.tag }}</span>
+            <span class="pill">{{ question.skill }}</span>
+            <span class="tag">Asked</span>
           </div>
-          <p>{{ note.text }}</p>
+          <p>{{ question.text }}</p>
+          <p class="muted">Note: {{ question.note or 'No note added.' }}</p>
         </div>
       {% endfor %}
+      {% if not asked_questions %}
+        <p class="muted">No asked questions recorded.</p>
+      {% endif %}
     </div>
   </div>
 
@@ -73,4 +85,5 @@
     </form>
   </div>
 </section>
+{% endif %}
 {% endblock %}

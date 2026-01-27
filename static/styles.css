@@ -64,6 +64,26 @@ body {
   border: 1px solid var(--border);
 }
 
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.status-block {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: end;
+}
+
+.timer {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
 .grid {
   display: grid;
   gap: 1.5rem;
@@ -94,6 +114,19 @@ body {
   font-size: 0.95rem;
 }
 
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: end;
+}
+
+.filters label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .form.compact label {
   margin-bottom: 0.7rem;
 }
@@ -119,6 +152,15 @@ body {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.primary:disabled,
+.secondary:disabled,
+.form input:disabled,
+.form textarea:disabled,
+.form select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .primary {
@@ -148,6 +190,36 @@ body {
 .muted {
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.alert {
+  background: #fff4e5;
+  border: 1px solid #fcd38a;
+  color: #9a5500;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.badge {
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.stack {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.hidden {
+  display: none;
 }
 
 .list {
@@ -203,6 +275,12 @@ body {
   gap: 1rem;
   margin-top: 0.6rem;
   align-items: center;
+}
+
+.question-note {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.4rem;
 }
 
 .pill {
