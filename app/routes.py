@@ -4,7 +4,10 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from io import BytesIO
 
-from flask import Blueprint, abort, jsonify, redirect, render_template, request, send_file, url_for
+import os
+
+from dotenv import load_dotenv
+from flask import Blueprint, abort, current_app, jsonify, redirect, render_template, request, send_file, url_for
 from fpdf import FPDF
 
 from .constants import DEFAULT_BRANCHES, DEFAULT_DEGREES, DEFAULT_ROLES, DEFAULT_YEARS
@@ -20,6 +23,7 @@ from .services import (
     average_skill_scores,
     save_question_bank,
 )
+from .llm_summary import generate_llm_summary
 
 main_bp = Blueprint("main", __name__)
 
@@ -317,8 +321,59 @@ def generate_summary(interview_id: int):
     interview = _get_or_404(Interview, interview_id)
     if interview.status != "completed":
         return jsonify({"status": "blocked"}), 400
-    bullets, recommendation, reason = build_summary(interview)
-    interview.summary = "\n".join(f"- {bullet}" for bullet in bullets)
+
+    scores = Score.query.filter_by(interview_id=interview_id).all()
+    asked_questions = Question.query.filter_by(interview_id=interview_id, asked=True).all()
+
+    summary = None
+    recommendation = None
+    reason = None
+
+    load_dotenv(override=True)
+    hf_token = os.getenv("HF_API_TOKEN") or current_app.config.get("HF_API_TOKEN")
+    hf_model = os.getenv("HF_MODEL") or current_app.config.get("HF_MODEL")
+    hf_timeout = int(os.getenv("HF_TIMEOUT") or current_app.config.get("HF_TIMEOUT", 30))
+    llm_enabled_env = os.getenv("LLM_ENABLED")
+    llm_enabled = (
+        llm_enabled_env.lower() == "true"
+        if llm_enabled_env is not None
+        else current_app.config.get("LLM_ENABLED")
+    )
+
+    if llm_enabled and hf_token:
+        try:
+            payload = {
+                "candidate_name": interview.candidate.name,
+                "role": interview.candidate.role,
+                "degree": interview.candidate.degree,
+                "year": interview.candidate.year,
+                "branch": interview.candidate.branch,
+                "skills": parse_skills(interview.candidate.skills),
+                "scores": [f"- {score.skill}: {score.value}/5" for score in scores],
+                "asked_questions": [
+                    f"- [{q.skill}] {q.text} | Rating: {q.rating or 'N/A'} | Note: {q.note or 'N/A'}"
+                    for q in asked_questions
+                ],
+                "transcript": interview.transcript or "",
+            }
+            summary, recommendation, reason = generate_llm_summary(
+                payload=payload,
+                model=hf_model,
+                token=hf_token,
+                timeout=hf_timeout,
+            )
+        except Exception:
+            current_app.logger.exception("Hugging Face summary generation failed")
+            summary = None
+
+    if not summary or not recommendation or not reason:
+        bullets, fallback_recommendation, fallback_reason = build_summary(interview)
+        if not summary:
+            summary = "\n".join(f"- {bullet}" for bullet in bullets)
+        recommendation = recommendation or fallback_recommendation
+        reason = reason or fallback_reason
+
+    interview.summary = summary
     interview.recommendation = recommendation
     interview.recommendation_reason = reason
     db.session.commit()

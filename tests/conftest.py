@@ -19,6 +19,7 @@ def app(tmp_path):
         {
             "TESTING": True,
             "SQLALCHEMY_DATABASE_URI": f"sqlite:///{services.DB_PATH.as_posix()}",
+            "LLM_ENABLED": False,
         }
     )
 
