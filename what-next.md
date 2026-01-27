@@ -19,3 +19,8 @@
 #### Generally 
 - If the interview is done, the state of the interview should be known
 - In the Main Page, Interview Section should have completed interview sections - no resume, cant change details. And, a ongoing interview section which will have the ongoing interviews
+
+# v 0.1.1
+## General
+- In main page the custom role should only be enabled when the `other` option is selected
+- In Questions bank page the custom role should only be enables when the `other` option is selected

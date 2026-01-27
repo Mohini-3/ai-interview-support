@@ -15,3 +15,6 @@
 ## Notes
 - Summary generation is rule-based for MVP.
 - Export produces a JSON report per interview.
+
+## Future Scopes
+- Authentication for the interviewer for Data Security
