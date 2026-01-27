@@ -1727,14 +1727,16 @@ html {
 }
 
 .interview-card {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  padding: 1.75rem 2rem;
+  display: grid !important;
+  grid-template-columns: 1fr auto auto !important;
+  grid-template-rows: auto !important;
+  gap: 1rem 1.5rem !important;
+  padding: 2.5rem 3.5rem !important;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%);
-  border-radius: 18px;
+  border-radius: 36px !important;
   border: 2px solid var(--border-light);
   transition: var(--transition);
+  align-items: center !important;
 }
 
 .interview-card:hover {
@@ -1756,6 +1758,21 @@ html {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  grid-column: 1;
+  grid-row: 1 / 2;
+}
+
+.interview-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.interview-meta {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
 }
 
 .interview-main {
@@ -1825,20 +1842,27 @@ html {
 .badge-score {
   background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
   color: white;
-  padding: 0.5rem 1.25rem;
+  padding: 0.7rem 1.5rem;
   border-radius: 999px;
   font-size: 1.125rem;
   font-weight: 700;
   box-shadow: var(--shadow-sm);
-  align-self: center;
-  margin: 0.25rem 0;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
 }
 
 .interview-actions {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  margin-top: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+  grid-column: 3 !important;
+  grid-row: 1 !important;
 }
 
 .btn-action {
@@ -1895,16 +1919,32 @@ html {
   }
   
   .interview-card {
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid !important;
+    grid-template-columns: 1fr auto auto !important;
+    grid-template-rows: auto !important;
+    align-items: center !important;
   }
-  
-  .interview-actions {
+
+  .interview-info {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
     width: 100%;
   }
   
+  .badge-score {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+  
+  .interview-actions {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    width: auto;
+    justify-content: center;
+  }
+  
   .btn-action {
-    flex: 1;
+    flex: none;
     text-align: center;
   }
   

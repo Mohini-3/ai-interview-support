@@ -201,8 +201,8 @@
                   <span class="meta-divider">•</span>
                   <span class="meta-item">{{ interview.candidate.branch }}</span>
                 </div>
-                <span class="badge badge-score">Avg Score: {{ '%.1f'|format(skill_scores.get(interview.id, 0)) }}/5</span>
               </div>
+              <span class="badge badge-score">Avg Score: {{ '%.1f'|format(skill_scores.get(interview.id, 0)) }}/5</span>
               <div class="interview-actions">
                 <a class="btn-action primary" href="{{ url_for('main.live_interview', interview_id=interview.id) }}">Resume Interview</a>
               </div>
@@ -240,8 +240,8 @@
                     <span class="meta-item recommendation-{{ interview.recommendation.lower().replace(' ', '-') }}">{{ interview.recommendation }}</span>
                   {% endif %}
                 </div>
-                <span class="badge badge-score">Avg Score: {{ '%.1f'|format(skill_scores.get(interview.id, 0)) }}/5</span>
               </div>
+              <span class="badge badge-score">Avg Score: {{ '%.1f'|format(skill_scores.get(interview.id, 0)) }}/5</span>
               <div class="interview-actions">
                 <a class="btn-action secondary" href="{{ url_for('main.summary', interview_id=interview.id) }}">View Summary</a>
               </div>
