@@ -10,11 +10,11 @@
   <header class="app-header">
     <div class="logo">Interview Companion</div>
     <nav>
-      <a href="{{ url_for('dashboard') }}">Dashboard</a>
-      <a href="{{ url_for('question_bank') }}">Question Bank</a>
+      <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('main.question_bank') }}">Question Bank</a>
       {% if interview %}
-        <a href="{{ url_for('live_interview', interview_id=interview.id) }}">Live</a>
-        <a href="{{ url_for('summary', interview_id=interview.id) }}">Summary</a>
+        <a href="{{ url_for('main.live_interview', interview_id=interview.id) }}">Live</a>
+        <a href="{{ url_for('main.summary', interview_id=interview.id) }}">Summary</a>
       {% endif %}
     </nav>
   </header>

@@ -27,7 +27,7 @@
 <section class="grid two">
   <div class="panel">
     <h2>New Interview</h2>
-    <form action="{{ url_for('create_interview') }}" method="post" class="form">
+    <form action="{{ url_for('main.create_interview') }}" method="post" class="form">
       <label>
         Candidate name
         <input type="text" name="name" required />
@@ -110,7 +110,7 @@
 
   <div class="panel">
     <h2>Recent Interviews</h2>
-    <form class="filters" method="get" action="{{ url_for('dashboard') }}">
+    <form class="filters" method="get" action="{{ url_for('main.dashboard') }}">
       <label>
         Role
         <select name="role">
@@ -152,7 +152,7 @@
                 <span class="badge">Score: {{ '%.1f'|format(skill_scores.get(interview.id, 0)) }}</span>
               </div>
               <div class="actions">
-                <a class="link" href="{{ url_for('live_interview', interview_id=interview.id) }}">Resume</a>
+                <a class="link" href="{{ url_for('main.live_interview', interview_id=interview.id) }}">Resume</a>
               </div>
             </li>
           {% endfor %}
@@ -175,7 +175,7 @@
               </div>
               <div class="actions">
                 <span class="muted">Completed</span>
-                <a class="link" href="{{ url_for('summary', interview_id=interview.id) }}">Summary</a>
+                <a class="link" href="{{ url_for('main.summary', interview_id=interview.id) }}">Summary</a>
               </div>
             </li>
           {% endfor %}
