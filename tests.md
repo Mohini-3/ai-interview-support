@@ -46,3 +46,20 @@
 
 ## 9) End-to-End Flow
 - **TC-29**: Add candidate → start interview → answer questions with notes → end interview → summary reflects asked questions and notes.
+
+---
+
+# Automated Tests (Pytest)
+
+## How to run
+- Install dependencies from requirements.txt
+- Run: `python -m pytest`
+
+## Coverage mapping
+- **TC-01/TC-02/TC-03/TC-04** → `tests/test_app.py::test_create_interview_missing_fields_redirects`, `tests/test_app.py::test_create_interview_duplicate_email`
+- **TC-07/TC-09/TC-26** → `tests/test_app.py::test_end_interview_and_generate_summary`, `tests/test_app.py::test_summary_blocked_until_completed`
+- **TC-14** → `tests/test_app.py::test_update_question_marks_asked_and_note`
+- **TC-17** → `tests/test_app.py::test_add_note_with_other_skill`
+- **TC-20/TC-21** → `tests/test_app.py::test_filters_by_role_and_recommendation`
+- **TC-24/TC-25** → `tests/test_app.py::test_summary_shows_only_asked_questions`
+- **Exports** → `tests/test_app.py::test_pdf_export_asked_questions_only`
