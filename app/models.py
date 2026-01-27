@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .extensions import db
 
@@ -19,7 +19,7 @@ class Candidate(db.Model):
 class Interview(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     candidate_id = db.Column(db.Integer, db.ForeignKey("candidate.id"), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     ended_at = db.Column(db.DateTime, nullable=True)
     status = db.Column(db.String(20), default="ongoing", nullable=False)
     assignment_score = db.Column(db.Integer, nullable=True)
@@ -48,7 +48,7 @@ class Note(db.Model):
     skill = db.Column(db.String(100), nullable=False)
     tag = db.Column(db.String(50), nullable=False)
     text = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
 class Score(db.Model):

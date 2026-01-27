@@ -11,16 +11,17 @@
     <form action="{{ url_for('main.add_question_bank') }}" method="post" class="form">
       <label>
         Select existing skill
-        <select name="skill_existing">
+        <select name="skill_existing" id="skill-existing-select">
           <option value="">-- Select --</option>
           {% for skill in question_bank.keys() %}
             <option value="{{ skill }}">{{ skill }}</option>
           {% endfor %}
+          <option value="other">Other</option>
         </select>
       </label>
-      <label>
-        Or add new skill
-        <input type="text" name="skill_new" placeholder="Data Engineering" />
+      <label id="custom-skill-field" class="hidden">
+        Custom skill
+        <input type="text" name="skill_new" id="custom-skill-input" placeholder="Data Engineering" />
       </label>
       <label>
         Questions (one per line)
@@ -38,6 +39,7 @@
           <details>
             <summary>
               <span>{{ skill }}</span>
+              <span class="badge">{{ questions|length }} questions</span>
               <form action="{{ url_for('main.delete_question_bank_skill', skill=skill) }}" method="post">
                 <button class="danger" type="submit">Delete Skill</button>
               </form>
@@ -55,4 +57,26 @@
     {% endif %}
   </div>
 </section>
+
+{% block scripts %}
+<script>
+  const skillSelect = document.getElementById('skill-existing-select');
+  const customSkillField = document.getElementById('custom-skill-field');
+  const customSkillInput = document.getElementById('custom-skill-input');
+
+  const toggleCustomSkill = () => {
+    if (skillSelect.value === 'other') {
+      customSkillField.classList.remove('hidden');
+      customSkillInput.setAttribute('required', 'required');
+    } else {
+      customSkillField.classList.add('hidden');
+      customSkillInput.value = '';
+      customSkillInput.removeAttribute('required');
+    }
+  };
+
+  skillSelect.addEventListener('change', toggleCustomSkill);
+  toggleCustomSkill();
+</script>
+{% endblock %}
 {% endblock %}

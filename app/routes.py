@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 
-from flask import Blueprint, jsonify, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, abort, jsonify, redirect, render_template, request, send_file, url_for
 from fpdf import FPDF
 
 from .constants import DEFAULT_BRANCHES, DEFAULT_DEGREES, DEFAULT_ROLES, DEFAULT_YEARS
@@ -22,6 +22,13 @@ from .services import (
 )
 
 main_bp = Blueprint("main", __name__)
+
+
+def _get_or_404(model, pk: int):
+    instance = db.session.get(model, pk)
+    if not instance:
+        abort(404)
+    return instance
 
 
 @main_bp.route("/")
@@ -78,6 +85,8 @@ def question_bank():
 def add_question_bank():
     skill_existing = request.form.get("skill_existing", "").strip()
     skill_new = request.form.get("skill_new", "").strip()
+    if skill_existing == "other":
+        skill_existing = ""
     skill = (skill_new or skill_existing).strip()
     questions_raw = request.form.get("questions", "").strip()
     if not skill or not questions_raw:
@@ -186,7 +195,7 @@ def create_interview():
 
 @main_bp.route("/interviews/<int:interview_id>/live")
 def live_interview(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     questions = Question.query.filter_by(interview_id=interview_id).order_by(Question.skill, Question.id).all()
     grouped_questions: dict[str, list[Question]] = defaultdict(list)
     for question in questions:
@@ -207,7 +216,7 @@ def live_interview(interview_id: int):
 
 @main_bp.route("/interviews/<int:interview_id>/summary")
 def summary(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status != "completed":
         return render_template(
             "summary.html",
@@ -230,7 +239,7 @@ def summary(interview_id: int):
 
 @main_bp.route("/api/interviews/<int:interview_id>/questions/<int:question_id>", methods=["POST"])
 def update_question(interview_id: int, question_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status == "completed":
         return jsonify({"status": "locked"}), 400
     question = Question.query.filter_by(id=question_id, interview_id=interview_id).first_or_404()
@@ -248,7 +257,7 @@ def update_question(interview_id: int, question_id: int):
 
 @main_bp.route("/api/interviews/<int:interview_id>/notes", methods=["POST"])
 def add_note(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status == "completed":
         return jsonify({"status": "locked"}), 400
     data = request.get_json(force=True)
@@ -285,7 +294,7 @@ def add_note(interview_id: int):
 
 @main_bp.route("/api/interviews/<int:interview_id>/scores", methods=["POST"])
 def update_score(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status == "completed":
         return jsonify({"status": "locked"}), 400
     data = request.get_json(force=True)
@@ -305,7 +314,7 @@ def update_score(interview_id: int):
 
 @main_bp.route("/api/interviews/<int:interview_id>/generate_summary", methods=["POST"])
 def generate_summary(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status != "completed":
         return jsonify({"status": "blocked"}), 400
     bullets, recommendation, reason = build_summary(interview)
@@ -324,7 +333,7 @@ def generate_summary(interview_id: int):
 
 @main_bp.route("/interviews/<int:interview_id>/summary", methods=["POST"])
 def save_summary(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status != "completed":
         return redirect(url_for("main.summary", interview_id=interview_id))
     interview.summary = request.form.get("summary", "").strip()
@@ -336,17 +345,17 @@ def save_summary(interview_id: int):
 
 @main_bp.route("/interviews/<int:interview_id>/end", methods=["POST"])
 def end_interview(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status != "completed":
         interview.status = "completed"
-        interview.ended_at = datetime.utcnow()
+        interview.ended_at = datetime.now(timezone.utc)
         db.session.commit()
     return redirect(url_for("main.live_interview", interview_id=interview_id))
 
 
 @main_bp.route("/interviews/<int:interview_id>/export")
 def export_interview(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     candidate = interview.candidate
     questions = Question.query.filter_by(interview_id=interview_id).all()
     notes = Note.query.filter_by(interview_id=interview_id).all()
@@ -408,7 +417,7 @@ def export_interview(interview_id: int):
 
 @main_bp.route("/interviews/<int:interview_id>/export/pdf")
 def export_interview_pdf(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     candidate = interview.candidate
     questions = Question.query.filter_by(interview_id=interview_id).all()
     asked_questions = [question for question in questions if question.asked]
