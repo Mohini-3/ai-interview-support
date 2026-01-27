@@ -26,3 +26,7 @@
 - In Questions bank page the custom role should only be enables when the `other` option is selected
 ## Questions bank page
 - in the current question bank should show how many questions are there present for each category
+
+# LLM
+- Parsing not done properly for the response received by the LLM
+- hugging face has limit issues

@@ -8,7 +8,7 @@ from typing import Any
 import requests
 
 
-DEFAULT_FALLBACK_MODEL = "openai/gpt-oss-120b:fastest"
+DEFAULT_FALLBACK_MODEL = "openai/gpt-4o-mini"
 SYSTEM_PROMPT = (
     "You are an interview summarization assistant. "
     "Return JSON only with keys: summary, recommendation, reason. "
@@ -132,6 +132,8 @@ def generate_llm_summary(
     model: str,
     token: str,
     timeout: int = 30,
+    base_url: str | None = None,
+    extra_headers: dict[str, str] | None = None,
 ) -> tuple[str | None, str | None, str | None]:
     if not token:
         raise RuntimeError("HF_API_TOKEN is missing")
@@ -141,9 +143,12 @@ def generate_llm_summary(
     def _call_model(model_id: str, messages: list[dict[str, str]]) -> str:
         last_error = None
         for attempt in range(3):
+            headers = {"Authorization": f"Bearer {token}"}
+            if extra_headers:
+                headers.update(extra_headers)
             response = requests.post(
-                "https://router.huggingface.co/v1/chat/completions",
-                headers={"Authorization": f"Bearer {token}"},
+                base_url or "https://router.huggingface.co/v1/chat/completions",
+                headers=headers,
                 json={
                     "model": model_id,
                     "messages": messages,

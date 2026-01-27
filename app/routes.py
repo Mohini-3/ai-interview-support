@@ -330,9 +330,13 @@ def generate_summary(interview_id: int):
     reason = None
 
     load_dotenv(override=True)
-    hf_token = os.getenv("HF_API_TOKEN") or current_app.config.get("HF_API_TOKEN")
-    hf_model = os.getenv("HF_MODEL") or current_app.config.get("HF_MODEL")
-    hf_timeout = int(os.getenv("HF_TIMEOUT") or current_app.config.get("HF_TIMEOUT", 30))
+    openrouter_token = os.getenv("OPENROUTER_API_KEY") or current_app.config.get("OPENROUTER_API_KEY")
+    openrouter_model = os.getenv("OPENROUTER_MODEL") or current_app.config.get("OPENROUTER_MODEL")
+    openrouter_timeout = int(
+        os.getenv("OPENROUTER_TIMEOUT") or current_app.config.get("OPENROUTER_TIMEOUT", 30)
+    )
+    openrouter_site_url = os.getenv("OPENROUTER_SITE_URL") or current_app.config.get("OPENROUTER_SITE_URL")
+    openrouter_app_name = os.getenv("OPENROUTER_APP_NAME") or current_app.config.get("OPENROUTER_APP_NAME")
     llm_enabled_env = os.getenv("LLM_ENABLED")
     llm_enabled = (
         llm_enabled_env.lower() == "true"
@@ -340,7 +344,18 @@ def generate_summary(interview_id: int):
         else current_app.config.get("LLM_ENABLED")
     )
 
-    if llm_enabled and hf_token:
+    token = openrouter_token
+    model = openrouter_model or "openai/gpt-4o-mini"
+    base_url = "https://openrouter.ai/api/v1/chat/completions"
+    extra_headers = {}
+    if openrouter_site_url:
+        extra_headers["HTTP-Referer"] = openrouter_site_url
+    if openrouter_app_name:
+        extra_headers["X-Title"] = openrouter_app_name
+    if not extra_headers:
+        extra_headers = None
+
+    if llm_enabled and token:
         try:
             payload = {
                 "candidate_name": interview.candidate.name,
@@ -358,12 +373,14 @@ def generate_summary(interview_id: int):
             }
             summary, recommendation, reason = generate_llm_summary(
                 payload=payload,
-                model=hf_model,
-                token=hf_token,
-                timeout=hf_timeout,
+                model=model,
+                token=token,
+                timeout=openrouter_timeout,
+                base_url=base_url,
+                extra_headers=extra_headers,
             )
         except Exception:
-            current_app.logger.exception("Hugging Face summary generation failed")
+            current_app.logger.exception("LLM summary generation failed")
             summary = None
 
     if not summary or not recommendation or not reason:
@@ -484,9 +501,12 @@ def export_interview_pdf(interview_id: int):
     pdf.add_page()
     pdf.set_font("Helvetica", size=12)
 
+    def _sanitize_pdf_text(text: str) -> str:
+        return text.encode("latin-1", errors="replace").decode("latin-1")
+
     def write_line(text: str, bold: bool = False):
         pdf.set_font("Helvetica", style="B" if bold else "", size=12)
-        pdf.multi_cell(0, 8, text)
+        pdf.multi_cell(0, 8, _sanitize_pdf_text(text))
 
     write_line("Interview Report", bold=True)
     write_line(f"Candidate: {candidate.name}")
