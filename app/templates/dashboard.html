@@ -195,17 +195,19 @@
               <div class="interview-info">
                 <div class="interview-main">
                   <strong class="candidate-name">{{ interview.candidate.name }}</strong>
-                  <span class="interview-status status-ongoing">In Progress</span>
+                  <span class="interview-status status-ongoing" style="display: inline-block; margin-top: 8px;">In Progress</span>
                 </div>
-                <div class="interview-meta">
+                <div class="interview-meta" style="margin-top: 12px;">
                   <span class="meta-item">{{ interview.candidate.role }}</span>
                   <span class="meta-divider">•</span>
                   <span class="meta-item">{{ interview.candidate.branch }}</span>
                 </div>
               </div>
-              <span class="badge badge-score">Avg Score: {{ '%.1f'|format(skill_scores.get(interview.id, 0)) }}/5</span>
-              <div class="interview-actions">
-                <a class="btn-action primary" href="{{ url_for('main.live_interview', interview_id=interview.id) }}">Resume Interview</a>
+              <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px;">
+                <span class="badge badge-score" style="flex: 0 0 auto;">Avg Score: {{ '%.1f'|format(skill_scores.get(interview.id, 0)) }}/5</span>
+                <div class="interview-actions">
+                  <a class="btn-action primary" href="{{ url_for('main.live_interview', interview_id=interview.id) }}">Resume Interview</a>
+                </div>
               </div>
             </li>
           {% endfor %}
