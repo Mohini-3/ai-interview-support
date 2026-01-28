@@ -3229,6 +3229,50 @@ html {
   line-height: 1;
 }
 
+/* SKILL NAME HOVER TOOLTIP */
+.skill-text {
+  position: relative;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+  display: inline-block;
+}
+
+.skill-text:hover {
+  color: #667eea;
+}
+
+.skill-text:hover::after {
+  content: attr(data-full-name);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #667eea;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  margin-bottom: 5px;
+}
+
+.skill-text:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #667eea;
+  z-index: 1000;
+}
+
 .add-questions-panel,
 .question-list-panel {
   height: fit-content;

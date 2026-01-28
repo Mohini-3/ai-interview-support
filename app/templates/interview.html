@@ -191,7 +191,9 @@
         <tbody>
           {% for score in scores %}
             <tr>
-              <td class="skill-name">{{ score.skill }}</td>
+              <td class="skill-name">
+                <span class="skill-text" title="{{ score.skill }}" data-full-name="{{ score.skill }}">{{ score.skill }}</span>
+              </td>
               <td class="skill-score">
                 <select class="score-select" data-skill="{{ score.skill }}" {% if interview.status == 'completed' %}disabled{% endif %}>
                   {% for rating in range(1, 6) %}
