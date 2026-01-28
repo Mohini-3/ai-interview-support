@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="panel dashboard-header">
-  <div class="dashboard-title">
-    <h1>Interviewer Dashboard</h1>
-    <p class="subtitle">Manage your technical interviews with ease</p>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem; background: white; border-radius: 12px; margin-bottom: 0.8rem;">
+  <div>
+    <h1 style="margin: 0; font-size: 1.4rem; color: #1a202c;">Interviewer Dashboard</h1>
+    <p style="margin: 0.2rem 0 0 0; color: #718096; font-size: 0.85rem;">Manage your technical interviews with ease</p>
   </div>
-  <div class="dashboard-stats">
+  <div style="display: flex; gap: 0.75rem;">
     <div class="stat-card">
       <div class="stat-value">{{ ongoing_interviews|length }}</div>
       <div class="stat-label">Ongoing</div>
@@ -19,6 +19,7 @@
       <div class="stat-label">Total</div>
     </div>
   </div>
+</div>
   {% if error %}
     <div class="alert">
       <span class="alert-icon">⚠</span>
