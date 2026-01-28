@@ -1,36 +1,54 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="panel interview-header">
-  <div class="header-row">
-    <div class="interview-title-section">
-      <h1>Live Interview Session</h1>
-      <div class="candidate-info-header">
-        <div class="candidate-badge">
-          <span class="candidate-initial">{{ interview.candidate.name[0] }}</span>
+  <div class="layout-c-container">
+    <!-- Row 1: Badge + Live Interview Title | Live Status + Timer -->
+    <div class="row-1">
+      <div class="left-side">
+        <div class="candidate-badge-compact">
+          <span class="candidate-initial-compact">{{ interview.candidate.name[0] }}</span>
         </div>
-        <div class="candidate-details">
-          <h3 class="candidate-name-header">{{ interview.candidate.name }}</h3>
-          <div class="candidate-meta-header">
-            <span class="meta-badge">{{ interview.candidate.role }}</span>
-            <span class="meta-divider">•</span>
-            <span class="meta-text">{{ interview.candidate.branch }}</span>
-            <span class="meta-divider">•</span>
-            <span class="meta-text">{{ interview.candidate.degree }}</span>
+        <h1 class="live-title">Live Interview</h1>
+      </div>
+      <div class="right-side">
+        <div class="status-timer-inline">
+          <div class="status-indicator {% if interview.status == 'ongoing' %}status-live{% else %}status-ended{% endif %}">
+            <span class="status-dot"></span>
+            <span class="status-text">{{ 'Live' if interview.status == 'ongoing' else 'Completed' }}</span>
+          </div>
+          <div id="live-timer" class="timer" data-started="{{ interview.created_at.isoformat() }}Z" data-ended="{{ interview.ended_at.isoformat() + 'Z' if interview.ended_at else '' }}">
+            00:00:00
           </div>
         </div>
       </div>
     </div>
-    <div class="status-block">
-      <div class="status-indicator {% if interview.status == 'ongoing' %}status-live{% else %}status-ended{% endif %}">
-        <span class="status-dot"></span>
-        <span class="status-text">{{ 'Live' if interview.status == 'ongoing' else 'Completed' }}</span>
+    
+    <!-- Row 2: Candidate Name | End Interview Button -->
+    <div class="row-2">
+      <div class="left-side">
+        <h2 class="candidate-name-compact">{{ interview.candidate.name }}</h2>
       </div>
-      <div id="live-timer" class="timer" data-started="{{ interview.created_at.isoformat() }}Z" data-ended="{{ interview.ended_at.isoformat() + 'Z' if interview.ended_at else '' }}">
-        00:00:00
+      <div class="right-side">
+        <form action="{{ url_for('main.end_interview', interview_id=interview.id) }}" method="post" class="end-interview-form-compact">
+          <button type="submit" class="btn-end-interview-compact" {% if interview.status == 'completed' %}disabled{% endif %}>End Interview</button>
+        </form>
       </div>
-      <form action="{{ url_for('main.end_interview', interview_id=interview.id) }}" method="post" style="width: 100%;">
-        <button type="submit" class="btn-end-interview" {% if interview.status == 'completed' %}disabled{% endif %}>End Interview</button>
-      </form>
+    </div>
+    
+    <!-- Row 3: Candidate Details | Empty -->
+    <div class="row-3">
+      <div class="left-side">
+        <div class="candidate-meta-compact">
+          <span class="meta-badge">{{ interview.candidate.role }}</span>
+          <span class="meta-divider">•</span>
+          <span class="meta-text">{{ interview.candidate.branch }}</span>
+          <span class="meta-divider">•</span>
+          <span class="meta-text">{{ interview.candidate.degree }}</span>
+        </div>
+      </div>
+      <div class="right-side">
+        <!-- Empty -->
+      </div>
     </div>
   </div>
 </section>
