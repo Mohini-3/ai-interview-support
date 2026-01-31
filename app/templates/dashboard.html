@@ -269,10 +269,15 @@
   const toggleCustomRole = () => {
     if (roleSelect.value === 'other') {
       customRoleField.classList.remove('hidden');
-      customRoleField.querySelector('input').setAttribute('required', 'required');
+      const input = customRoleField.querySelector('input');
+      input.removeAttribute('disabled');
+      input.setAttribute('required', 'required');
     } else {
       customRoleField.classList.add('hidden');
-      customRoleField.querySelector('input').removeAttribute('required');
+      const input = customRoleField.querySelector('input');
+      input.setAttribute('disabled', 'disabled');
+      input.removeAttribute('required');
+      input.value = '';
     }
   };
 

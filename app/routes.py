@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 
-from flask import Blueprint, jsonify, redirect, render_template, request, send_file, url_for
+import os
+
+from dotenv import load_dotenv
+from flask import Blueprint, abort, current_app, jsonify, redirect, render_template, request, send_file, url_for
 from fpdf import FPDF
 
 from .constants import DEFAULT_BRANCHES, DEFAULT_DEGREES, DEFAULT_ROLES, DEFAULT_YEARS
@@ -20,8 +23,16 @@ from .services import (
     average_skill_scores,
     save_question_bank,
 )
+from .llm_summary import generate_llm_summary
 
 main_bp = Blueprint("main", __name__)
+
+
+def _get_or_404(model, pk: int):
+    instance = db.session.get(model, pk)
+    if not instance:
+        abort(404)
+    return instance
 
 
 @main_bp.route("/")
@@ -78,6 +89,8 @@ def question_bank():
 def add_question_bank():
     skill_existing = request.form.get("skill_existing", "").strip()
     skill_new = request.form.get("skill_new", "").strip()
+    if skill_existing == "other":
+        skill_existing = ""
     skill = (skill_new or skill_existing).strip()
     questions_raw = request.form.get("questions", "").strip()
     if not skill or not questions_raw:
@@ -186,7 +199,7 @@ def create_interview():
 
 @main_bp.route("/interviews/<int:interview_id>/live")
 def live_interview(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     questions = Question.query.filter_by(interview_id=interview_id).order_by(Question.skill, Question.id).all()
     grouped_questions: dict[str, list[Question]] = defaultdict(list)
     for question in questions:
@@ -207,7 +220,7 @@ def live_interview(interview_id: int):
 
 @main_bp.route("/interviews/<int:interview_id>/summary")
 def summary(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status != "completed":
         return render_template(
             "summary.html",
@@ -230,7 +243,7 @@ def summary(interview_id: int):
 
 @main_bp.route("/api/interviews/<int:interview_id>/questions/<int:question_id>", methods=["POST"])
 def update_question(interview_id: int, question_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status == "completed":
         return jsonify({"status": "locked"}), 400
     question = Question.query.filter_by(id=question_id, interview_id=interview_id).first_or_404()
@@ -248,7 +261,7 @@ def update_question(interview_id: int, question_id: int):
 
 @main_bp.route("/api/interviews/<int:interview_id>/notes", methods=["POST"])
 def add_note(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status == "completed":
         return jsonify({"status": "locked"}), 400
     data = request.get_json(force=True)
@@ -285,7 +298,7 @@ def add_note(interview_id: int):
 
 @main_bp.route("/api/interviews/<int:interview_id>/scores", methods=["POST"])
 def update_score(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status == "completed":
         return jsonify({"status": "locked"}), 400
     data = request.get_json(force=True)
@@ -305,11 +318,79 @@ def update_score(interview_id: int):
 
 @main_bp.route("/api/interviews/<int:interview_id>/generate_summary", methods=["POST"])
 def generate_summary(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status != "completed":
         return jsonify({"status": "blocked"}), 400
-    bullets, recommendation, reason = build_summary(interview)
-    interview.summary = "\n".join(f"- {bullet}" for bullet in bullets)
+
+    scores = Score.query.filter_by(interview_id=interview_id).all()
+    asked_questions = Question.query.filter_by(interview_id=interview_id, asked=True).all()
+
+    summary = None
+    recommendation = None
+    reason = None
+
+    load_dotenv(override=True)
+    openrouter_token = os.getenv("OPENROUTER_API_KEY") or current_app.config.get("OPENROUTER_API_KEY")
+    openrouter_model = os.getenv("OPENROUTER_MODEL") or current_app.config.get("OPENROUTER_MODEL")
+    openrouter_timeout = int(
+        os.getenv("OPENROUTER_TIMEOUT") or current_app.config.get("OPENROUTER_TIMEOUT", 30)
+    )
+    openrouter_site_url = os.getenv("OPENROUTER_SITE_URL") or current_app.config.get("OPENROUTER_SITE_URL")
+    openrouter_app_name = os.getenv("OPENROUTER_APP_NAME") or current_app.config.get("OPENROUTER_APP_NAME")
+    llm_enabled_env = os.getenv("LLM_ENABLED")
+    llm_enabled = (
+        llm_enabled_env.lower() == "true"
+        if llm_enabled_env is not None
+        else current_app.config.get("LLM_ENABLED")
+    )
+
+    token = openrouter_token
+    model = openrouter_model or "openai/gpt-4o-mini"
+    base_url = "https://openrouter.ai/api/v1/chat/completions"
+    extra_headers = {}
+    if openrouter_site_url:
+        extra_headers["HTTP-Referer"] = openrouter_site_url
+    if openrouter_app_name:
+        extra_headers["X-Title"] = openrouter_app_name
+    if not extra_headers:
+        extra_headers = None
+
+    if llm_enabled and token:
+        try:
+            payload = {
+                "candidate_name": interview.candidate.name,
+                "role": interview.candidate.role,
+                "degree": interview.candidate.degree,
+                "year": interview.candidate.year,
+                "branch": interview.candidate.branch,
+                "skills": parse_skills(interview.candidate.skills),
+                "scores": [f"- {score.skill}: {score.value}/5" for score in scores],
+                "asked_questions": [
+                    f"- [{q.skill}] {q.text} | Rating: {q.rating or 'N/A'} | Note: {q.note or 'N/A'}"
+                    for q in asked_questions
+                ],
+                "transcript": interview.transcript or "",
+            }
+            summary, recommendation, reason = generate_llm_summary(
+                payload=payload,
+                model=model,
+                token=token,
+                timeout=openrouter_timeout,
+                base_url=base_url,
+                extra_headers=extra_headers,
+            )
+        except Exception:
+            current_app.logger.exception("LLM summary generation failed")
+            summary = None
+
+    if not summary or not recommendation or not reason:
+        bullets, fallback_recommendation, fallback_reason = build_summary(interview)
+        if not summary:
+            summary = "\n".join(f"- {bullet}" for bullet in bullets)
+        recommendation = recommendation or fallback_recommendation
+        reason = reason or fallback_reason
+
+    interview.summary = summary
     interview.recommendation = recommendation
     interview.recommendation_reason = reason
     db.session.commit()
@@ -324,7 +405,7 @@ def generate_summary(interview_id: int):
 
 @main_bp.route("/interviews/<int:interview_id>/summary", methods=["POST"])
 def save_summary(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status != "completed":
         return redirect(url_for("main.summary", interview_id=interview_id))
     interview.summary = request.form.get("summary", "").strip()
@@ -336,17 +417,17 @@ def save_summary(interview_id: int):
 
 @main_bp.route("/interviews/<int:interview_id>/end", methods=["POST"])
 def end_interview(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     if interview.status != "completed":
         interview.status = "completed"
-        interview.ended_at = datetime.utcnow()
+        interview.ended_at = datetime.now(timezone.utc)
         db.session.commit()
     return redirect(url_for("main.live_interview", interview_id=interview_id))
 
 
 @main_bp.route("/interviews/<int:interview_id>/export")
 def export_interview(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     candidate = interview.candidate
     questions = Question.query.filter_by(interview_id=interview_id).all()
     notes = Note.query.filter_by(interview_id=interview_id).all()
@@ -408,7 +489,7 @@ def export_interview(interview_id: int):
 
 @main_bp.route("/interviews/<int:interview_id>/export/pdf")
 def export_interview_pdf(interview_id: int):
-    interview = Interview.query.get_or_404(interview_id)
+    interview = _get_or_404(Interview, interview_id)
     candidate = interview.candidate
     questions = Question.query.filter_by(interview_id=interview_id).all()
     asked_questions = [question for question in questions if question.asked]
@@ -420,9 +501,12 @@ def export_interview_pdf(interview_id: int):
     pdf.add_page()
     pdf.set_font("Helvetica", size=12)
 
+    def _sanitize_pdf_text(text: str) -> str:
+        return text.encode("latin-1", errors="replace").decode("latin-1")
+
     def write_line(text: str, bold: bool = False):
         pdf.set_font("Helvetica", style="B" if bold else "", size=12)
-        pdf.multi_cell(0, 8, text)
+        pdf.multi_cell(0, 8, _sanitize_pdf_text(text))
 
     write_line("Interview Report", bold=True)
     write_line(f"Candidate: {candidate.name}")
